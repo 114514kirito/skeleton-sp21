@@ -109,16 +109,62 @@ public class Model extends Observable {
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
-
+        board.setViewingPerspective(side);
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
-
+        for(int x=0;x<size();x++){
+            changed=tiltColumn(x) || changed;
+        }
+        board.setViewingPerspective(Side.NORTH);
         checkGameOver();
+
         if (changed) {
             setChanged();
         }
         return changed;
+    }
+    public boolean moveTileUpAsFarAsPossible(int x, int y,boolean[] hasmerge) {
+        Tile currTile = board.tile(x, y);
+        if (currTile==null) return false;
+        int myValue = currTile.value();
+        int targetY = y;
+        int size=board.size();
+        while (targetY <size-1  &&  board.tile(x,targetY+1)==null){
+            targetY+=1;
+        }
+        if (targetY <size-1){
+            Tile up=board.tile(x,targetY+1);
+            if( up!=null&& up.value()==myValue  &&  ! hasmerge[targetY+1] ) {
+                board.move(x,targetY+1,currTile);
+                hasmerge[targetY+1]=true;
+                score+=myValue*2;
+                return true;
+            }
+        }
+        if(targetY !=y){
+            board.move(x,targetY,currTile);
+            return true;
+        }
+        return false;
+
+
+        // TODO: Tasks 5, 6, and 10. Fill in this function.
+    }
+
+    /** Handles the movements of the tilt in column x of the board
+     * by moving every tile in the column as far up as possible.
+     * The viewing perspective has already been set,
+     * so we are tilting the tiles in this column up.
+     * */
+    public boolean tiltColumn(int x) {
+        boolean changed= false;
+        boolean[] arr=new boolean[size()];
+        for (int y=board.size()-2;y>=0;y--){
+            changed= moveTileUpAsFarAsPossible(x,y,arr) || changed;
+        }
+        // TODO: Task 7. Fill in this function.
+        return  changed;
     }
 
     /** Checks if the game is over and sets the gameOver variable
@@ -138,6 +184,11 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        for(int row=0;row< b.size();row++){
+            for(int col=0;col<b.size();col++){
+                if(b.tile(row,col)==null)return true;
+            }
+        }
         return false;
     }
 
@@ -148,6 +199,11 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        for(int row=0;row< b.size();row++){
+            for(int col=0;col<b.size();col++){
+                if(b.tile(row,col)!=null && b.tile(row,col).value()==MAX_PIECE)return true;
+            }
+        }
         return false;
     }
 
@@ -159,7 +215,19 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        if(emptySpaceExists(b))return true;
+        for(int row=0;row< b.size();row++){
+            for(int col=0;col<b.size();col++){
+               if(col+1<b.size() && b.tile(col+1,row) !=null){
+                   if(b.tile(col+1,row).value()==b.tile(col,row).value())return true;
+               }
+                if(row+1<b.size() && b.tile(col,row+1) !=null){
+                    if(b.tile(col,row+1).value()==b.tile(col,row).value())return true;
+                }
+            }
+        }
         return false;
+
     }
 
 
